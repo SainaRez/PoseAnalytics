@@ -1,6 +1,8 @@
 import json
 import math
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 """
 NOTES:
@@ -253,14 +255,26 @@ def plot_accuracy(accuracy_list):
 
 
 if __name__ == "__main__":
-    # path = './stats.json'
+    path = './stats.json'
+    data_points = get_data(path)
+    shortest_loop_index = get_shortest_loop(data_points)
+    get_accuracy(data_points, shortest_loop_index)
+
+    # path = './loops.json'
     # data_points = get_data(path)
-    # shortest_loop_index = get_shortest_loop(data_points)
+    # shortest_loop_index = 0
     # get_accuracy(data_points, shortest_loop_index)
 
-    path = './loops.json'
-    data_points = get_data(path)
-    shortest_loop_index = 0
-    get_accuracy(data_points, shortest_loop_index)
+
+    # Matrix Profile for getting the Motifs that compare the singular actions
+    # Sparse optical flow for tracking points. 
+    # #Key point detection and which ones I should track and you figure out what happens between the two frames
+    # Dense optical flow (better)
+    # umap for reducing dimensionality *(better to use variational autoencoder)
+
+    #Three methods of using pose data, neural network and using Sparse optical flow
+
+
+
 
 

@@ -2,6 +2,8 @@ import os
 import ast
 import json
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 
 boxes = {"notchair-0.6129701841008188":False,"notchair-0.1380646850436077":False,"notchair-0.12773989756762405":False,"notchair-0.5470203078667342":False,"notchair-0.8918255995143329":False}
 
@@ -27,13 +29,13 @@ points_element = {"time": None, "pose": [{"id": None, "joints": None}], "sequenc
 
 def check_box_collision(point_list):
 
-    box_3 = {"name": "notchair-0.12773989756762405", "x":-2.4603330486518047,"y":1.000000000745058,"z":1.9437374568306593,"width":6,"height":6,"depth":6}
+    box_3 = {"name": "notchair-0.12773989756762405", "x":-2.4603330486518047,"y":1.000000000745058,"z":1.9437374568306593,"width":100,"height":100,"depth":100}
 
     #box_3 = {"name": "notchair-0.12773989756762405", "x":-2.4603330486518047,"y":1.000000000745058,"z":1.9437374568306593,"width":0.8,"height":2,"depth":0.8}
     box_4 = {"name": "notchair-0.5470203078667342", "x":-4.186641944318453,"y":1.000000000745058,"z":-0.011528967213319086,"width":0.8,"height":2,"depth":0.8}
 
     for point in point_list:
-        #print ("point[x] ", point['x'], 'point[y]')
+        # print ("point[x] ", point['x'], 'point[y]')
         if (point["x"] >= (box_3["x"] - box_3["width"]/2) and 
             point["x"] <= (box_3["x"] + box_3["width"]/2) and 
             point["y"] >= (box_3["y"] - box_3["height"]/2) and 
@@ -58,15 +60,32 @@ def check_box_collision(point_list):
             return "No Collision"
 
 
+
+def transform_robot_data(each_line_dict):
+    xyz = np.array([each_line_dict['x'], each_line_dict['y'], each_line_dict['z'], 1])
+    print(xyz)
+    rot1 = np.array([[-1, 0, 0, 0],[0, 1, 0, -1],[0, 0, 1, 0],[0, 0, 0, 1]])
+    rot2 = np.array([[4.45106, 2.27773, 0, -62.2],[0, 0, -5, 0],[-2.27773, 4.451, 0, 18.4],[0, 0, 0, 1]])
+    xyz_c = np.dot(rot1, xyz)
+    print("First : ", xyz_c)
+    xyz_cc = np.dot(rot2, xyz_c)
+    print("Second Rotatino: ", xyz_cc)
+
+
 def change_x(dict_list, subject):
+
     #print(dict_list)
     for coord_dict in dict_list:
         if subject == "human":
             coord_dict["x"] = coord_dict["x"] * -1
         else:
-            coord_dict["x"] = (coord_dict["x"] - 10) * -1
+            #print("coord_dict: ", coord_dict)
+            #coord_dict["x"] = (coord_dict["x"] - 10) * -1
+            transform_robot_data(coord_dict)
+            #pass
     #print(dict_list)
     return dict_list
+
 
 def add_offset(dict_list):
     for coord_dict in dict_list:
@@ -75,7 +94,7 @@ def add_offset(dict_list):
     return dict_list
 
 # Visualization
-def plot_loop(loop_points):
+def plot_loop(loop_points, file_name):
 
     x = []
     y = []
@@ -83,6 +102,9 @@ def plot_loop(loop_points):
     x_mean =[]
     y_mean = []
     z_mean = []
+    x_center = []
+    y_center = []
+    z_center = []
     loop_count = 0
 
 
@@ -94,6 +116,11 @@ def plot_loop(loop_points):
         z_sum = 0
         count = 0
         loop_count += 1
+
+        x_center.append(list_element[0]['x'])
+        y_center.append(list_element[0]['y'])
+        z_center.append(list_element[0]['z'])
+
         for point in list_element:
             #print("############# Point:", point)
             x.append(point['x'])
@@ -111,38 +138,46 @@ def plot_loop(loop_points):
         z_mean.append(z_sum/count)
         
     fig = plt.figure()
+    fig.canvas.set_window_title(file_name.split(".")[0])
     ax = fig.add_subplot(111, projection='3d')
-    # plt.set_xlabel("time")
-    # plt.set_ylabel("x_mean")
-    # plt.set_zlabel("y_mean")
-    #pnt3d=ax.scatter(x,y,z,c=z)
-    pnt3d=ax.scatter(range(loop_count), x_mean,y_mean,c=z_mean)
+    plt.title('Human Movement Trajectory')
+    ax.set_xlabel('Z axis')
+    ax.set_ylabel('X axis')
+    ax.set_zlabel('Y axis')
+
+
+    #pnt3d=ax.scatter(range(loop_count), x_mean, y_mean, c=z_mean)
+    pnt3d=ax.scatter(z_mean, x_mean, y_mean, c=y_mean)
+    #pnt3d=ax.scatter(z_center, x_center, y_center, c=y_center)
+    #pnt3d=ax.scatter(z, x, y, c=y)
 
     cbar=plt.colorbar(pnt3d)
     cbar.set_label("coord")
     plt.show()
 # Visualization
 
-def plot_loop_robot(loop_points):
+def plot_loop_robot(loop_points, file_name):
     x = []
     y = []
     z = []
     loop_count = 0
     for list_element in loop_points:
         loop_count += 1
-        print("################ List_Element_plot: ", list_element)
-        for point in list_element:
-            x.append(point['x'])
-            y.append(point['y'])
-            z.append(point['z'])
+        #print("################ List_Element_plot: ", list_element)
+        x.append(list_element[0]['x'])
+        y.append(list_element[0]['y'])
+        z.append(list_element[0]['z'])
     
     fig = plt.figure()
+    fig.canvas.set_window_title(file_name.split(".")[0])
     ax = fig.add_subplot(111, projection='3d')
-    # plt.set_xlabel("time")
-    # plt.set_ylabel("x_mean")
-    # plt.set_zlabel("y_mean")
-    # pnt3d=ax.scatter(x,y,z,c=z)
-    pnt3d=ax.scatter(range(loop_count), x, y, c=z)
+    plt.title('Robot Movement Trajectory')
+    ax.set_xlabel('Z axis')
+    ax.set_ylabel('X axis')
+    ax.set_zlabel('Y axis')
+
+    pnt3d=ax.scatter(z, x, y, c=y)
+    # pnt3d=ax.scatter(range(loop_count), x, y, c=z)
 
     cbar=plt.colorbar(pnt3d)
     cbar.set_label("coord")
@@ -183,6 +218,8 @@ def create_json_dict(file_path, subject):
                     points_element["pose"][0]["joints"] = joints_list
                     # print("points element ", points_element, "\n")
 
+                    loop_points.append(joints_list)
+
                     box_name = check_box_collision(joints_list)
 
                     if box_name == "No Collision":
@@ -200,7 +237,7 @@ def create_json_dict(file_path, subject):
                         points_element["sequenceId"] = box_name
                     
                     # Visualization
-                    loop_points.append(joints_list)
+                    #loop_points.append(joints_list)
                     # Visualization
                     # print("points element ", points_element, "\n")
 
@@ -213,9 +250,9 @@ def create_json_dict(file_path, subject):
             # Visualization
             #print("loop_points:", loop_points, "\n")
             if subject == "human":
-                plot_loop(loop_points)
-            else:
-                plot_loop_robot(loop_points)
+                plot_loop(loop_points, _file)
+            # else:
+            #     plot_loop_robot(loop_points, _file)
             # Visualization
 
 
